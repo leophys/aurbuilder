@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/leophys/aurbuilder/utils"
 	homedir "github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -47,6 +48,14 @@ var buildCmd = &cobra.Command{
 				"error":      err,
 				"pkg":        pkgName,
 			}).Error("Package database sync failed")
+		}
+		err = maybeEditPkgbuild(filepath.Join(baseDir, pkgName))
+		if err != nil {
+			log.WithFields(log.Fields{
+				"subcommand": "build",
+				"error":      err,
+				"pkg":        pkgName,
+			}).Fatal("PKGBUILD edit failed")
 		}
 		err = doBuild(filepath.Join(baseDir, pkgName))
 		if err != nil {
@@ -149,9 +158,38 @@ func fetchSources(pkgName string, baseDir string) error {
 	return err
 }
 
+func maybeEditPkgbuild(basePath string) error {
+	defaultEditor := os.Getenv("EDITOR")
+	if defaultEditor == "" {
+		defaultEditor = "vi"
+	}
+	log.WithFields(log.Fields{
+		"subcommand":    "build",
+		"defaultEditor": defaultEditor,
+	}).Debug("Default editor")
+	editCmd := exec.Command(defaultEditor, filepath.Join(basePath, "PKGBUILD"))
+	editCmd.Stdin = os.Stdin
+	editCmd.Stdout = os.Stdout
+	editCmd.Stderr = os.Stderr
+	promptQuestion := "Would you like to edit the PKGBUILD? [y/N]"
+	doEdit, err := utils.AskConfirmation(promptQuestion, false)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"subcommand": "build",
+			"err":        err,
+		}).Error("Error while reading response")
+	}
+	if doEdit {
+		err = editCmd.Run()
+	} else {
+		err = nil
+	}
+	return err
+}
+
 func updatePacman() error {
 	updatePacmanCmd := exec.Command("/usr/bin/sh", "-c", "sudo pacman -Sy")
-	updatePacmanCmd.Stdin  = os.Stdin
+	updatePacmanCmd.Stdin = os.Stdin
 	updatePacmanCmd.Stdout = os.Stdout
 	updatePacmanCmd.Stderr = os.Stderr
 	err := updatePacmanCmd.Run()
@@ -167,7 +205,7 @@ func doBuild(repoDir string) error {
 	}).Info("Show build pwd")
 	fmt.Println("pwd: ", cwd)
 	makepkgCmd := exec.Command("makepkg", "-s")
-	makepkgCmd.Stdin  = os.Stdin
+	makepkgCmd.Stdin = os.Stdin
 	makepkgCmd.Stdout = os.Stdout
 	makepkgCmd.Stderr = os.Stderr
 	err := makepkgCmd.Run()

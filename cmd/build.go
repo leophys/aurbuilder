@@ -188,7 +188,7 @@ func maybeEditPkgbuild(basePath string) error {
 }
 
 func updatePacman() error {
-	updatePacmanCmd := exec.Command("/usr/bin/sh", "-c", "sudo pacman -Sy")
+	updatePacmanCmd := exec.Command("/usr/bin/sh", "-c", "sudo pacman -Syu --noconfirm")
 	updatePacmanCmd.Stdin = os.Stdin
 	updatePacmanCmd.Stdout = os.Stdout
 	updatePacmanCmd.Stderr = os.Stderr

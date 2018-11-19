@@ -106,8 +106,7 @@ func fetchSources(pkgName string, baseDir string) error {
 	_, err = os.Stat(repoDir)
 	if os.IsNotExist(err) {
 		if logLevel == "debug" {
-			gitCloneCmd.Stdout = os.Stdout
-			gitCloneCmd.Stderr = os.Stderr
+			utils.AttachToConsole(gitCloneCmd)
 		}
 		err = gitCloneCmd.Run()
 		if err != nil {
@@ -168,9 +167,7 @@ func maybeEditPkgbuild(basePath string) error {
 		"defaultEditor": defaultEditor,
 	}).Debug("Default editor")
 	editCmd := exec.Command(defaultEditor, filepath.Join(basePath, "PKGBUILD"))
-	editCmd.Stdin = os.Stdin
-	editCmd.Stdout = os.Stdout
-	editCmd.Stderr = os.Stderr
+	utils.AttachToConsole(editCmd)
 	promptQuestion := "Would you like to edit the PKGBUILD? [y/N]"
 	doEdit, err := utils.AskConfirmation(promptQuestion, false)
 	if err != nil {
@@ -189,9 +186,7 @@ func maybeEditPkgbuild(basePath string) error {
 
 func updatePacman() error {
 	updatePacmanCmd := exec.Command("/usr/bin/sh", "-c", "sudo pacman -Syu --noconfirm")
-	updatePacmanCmd.Stdin = os.Stdin
-	updatePacmanCmd.Stdout = os.Stdout
-	updatePacmanCmd.Stderr = os.Stderr
+	utils.AttachToConsole(updatePacmanCmd)
 	err := updatePacmanCmd.Run()
 	return err
 }
@@ -203,11 +198,8 @@ func doBuild(repoDir string) error {
 		"subcommand": "build",
 		"pwd":        cwd,
 	}).Info("Show build pwd")
-	fmt.Println("pwd: ", cwd)
 	makepkgCmd := exec.Command("makepkg", "-s")
-	makepkgCmd.Stdin = os.Stdin
-	makepkgCmd.Stdout = os.Stdout
-	makepkgCmd.Stderr = os.Stderr
+	utils.AttachToConsole(makepkgCmd)
 	err := makepkgCmd.Run()
 	if err != nil {
 		log.WithFields(log.Fields{

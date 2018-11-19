@@ -1,7 +1,12 @@
 package utils
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+	"os/exec"
+)
 
+// AskConfirmation prompts a question and needs a default answer
 // "Would you like to edit the PKGBUILD? [y/N]"
 func AskConfirmation(message string, defaultAnswer bool) (bool, error) {
 	fmt.Println(message)
@@ -25,6 +30,8 @@ func AskConfirmation(message string, defaultAnswer bool) (bool, error) {
 	return AskConfirmation(message, defaultAnswer)
 }
 
+// IsInSlice is like the "in" python operator, to check if an element is
+// present in a slice
 func IsInSlice(word string, slice []string) bool {
 	inSlice := false
 	for _, sliceMemeber := range slice {
@@ -33,4 +40,12 @@ func IsInSlice(word string, slice []string) bool {
 		}
 	}
 	return inSlice
+}
+
+// AttachToConsole automates the redirection of
+// a command to the present console
+func AttachToConsole(command *exec.Cmd) {
+	command.Stdin = os.Stdin
+	command.Stderr = os.Stderr
+	command.Stdout = os.Stdout
 }
